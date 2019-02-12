@@ -1,2 +1,2 @@
 # AthenianVis
-front-end visualization for Athenian project
+front-end visualization tools for Athenian project.
