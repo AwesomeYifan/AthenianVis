@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Athenian Visualization</title>
+    <style>::-webkit-scrollbar{display:none;}html,body{overflow:hidden;margin:0;}</style>
+</head>
+<body>
+<div id="mountNode"></div>
+<div id="mountNode2" class = "textlay"></div>
+<script>/*Fixing iframe window.innerHeight 0 issue in Safari*/document.body.clientHeight;</script>
+<script src="./g6.js"></script>
+<script src="./plugin.js"></script>
+<script src="./jQuery.js"></script>
+<script src="./d3.js"></script>
+<style>
+  .textlay {
+    position: absolute;
+    top: 200px;    
+    left: 35px;
+    font-size: 25px;
+    font-style:georgia;
+  }
+  .overlay {
+    position: absolute;
+    top: 20px;
+    left: 30px;
+    font-size: 25px;
+    font-style:georgia;
+    margin: 5px;
+  }
+  .overlay_button {
+      position: absolute;
+      top: 28px;
+      left: 210px;
+      font-size: 25px;
+    }
+  .tBox {
+    display: inline-block;
+    height: 25px;
+    width: 160px;
+    font-size: 25px;
+    margin: 5px;
+  }
+  .transparent-style{
+    background-color: '#fff';
+    opacity: .4;
+  }
+  .alignment {
+    display: inline-block;
+    width: 80px;
+  }
+</style>
+<p id="demo" class = "overlay"></p>
+<form class="overlay">
+    <!-- <label class="alignment"> Name: </label> <input class = "tBox" type="text" value="BASOS" id="inputName" name="name" size="9"><br>
+    <label class="alignment"> Link: </label> <input class = "tBox" type="text" id="inputLink" name="link" size="9"><br> -->
+    <!-- <input class = "tBox" type="text" value="BALAKROS" id="inputName" name="name" size="9"><br> -->
+    <input class = "tBox" type="text" value="" id="inputName" name="name" size="9"><br>
+
+</form>
+  <button onclick="buttonClick()" class="overlay_button">
+      search
+  </button>
+<script>
+var jdata;
+var lastSearchNode = 0000;
+var lastCheck = -1;
+var ggraph;
+var lastNode;
+var targetEdge = "edge2";
+//$("#mountNode").css('backgroundColor', '#e5ddd1');
+//$("#mountNode").css('backgroundColor', 'black');
+$("#mountNode");
+$.getJSON('./data.json', function(data) {
+  var Mapper = G6.Plugins['tool.d3.mapper'];
+  jdata = data;
+  
+  var _d = d3,
+    forceSimulation = _d.forceSimulation,
+    forceLink = _d.forceLink,
+    forceManyBody = _d.forceManyBody,
+    forceX = _d.forceX,
+    forceY = _d.forceY,
+    forceCollide = _d.forceCollide;
+
+  var nodeMap = {};
+  // var nodeSizeMapper = new Mapper('node', 'degree', 'size', [8, 8], {
+  //   legendCfg: null
+  // });
+  //var nodeColorMapper = new Mapper('node', 'type', 'color', ['#e18826', '#002a67']);
+
+  G6.registerBehaviour('mouseEnterFillRed', graph=>{
+    graph.behaviourOn('node:mouseenter', ev=>{
+      graph.update(ev.item, {
+        color: 'red'
+      });
+    });
+  });
+
+  G6.registerBehaviour('mouseLeaveResetFill', graph=>{
+    graph.behaviourOn('node:mouseleave', ev=>{
+      graph.update(ev.item, {
+        color: '#66B2FF'
+      });
+    });
+  });
+  const MIN_ARROW_SIZE = 3;
+  G6.registerEdge('customEdge', {
+  // 起始（圆形）箭头
+  // label: function label(item) {
+  //     var label = {
+  //       text: item.model.name,
+  //       fontSize: 10,
+  //       fill: 'black'
+  //     };
+  //     return label;    
+  // },
+  startArrow: {
+    path() {
+      const r = 5;
+      const x = -5;
+      const y = 0; 
+      return [
+        [ 'M', x, y - r ],
+        [ 'a', r, r, 0, 1, 1, 0, 2 * r ],
+        [ 'a', r, r, 0, 1, 1, 0, -2 * r ],
+        [ 'z' ]
+      ];
+    },
+    shorten() {
+      return 10;
+    },
+    style(item) {
+      const keyShape = item.getKeyShape();
+      const { strokeOpacity, stroke } = keyShape.attr();
+      return {
+        fillOpacity: strokeOpacity,
+        stroke
+      };
+    }
+  },
+  // 终止箭头
+  endArrow: {
+    path(item) {
+      const keyShape = item.getKeyShape();
+      let lineWidth = keyShape.attr('lineWidth');
+      lineWidth = lineWidth > MIN_ARROW_SIZE ? lineWidth : MIN_ARROW_SIZE;
+      const width = lineWidth * 10 / 3;
+      const halfHeight = lineWidth * 4 / 3;
+      const radius = lineWidth * 4;
+      return [
+      [ 'M', -width, halfHeight ],
+      [ 'L', 0, 0 ],
+      [ 'L', -width, -halfHeight ],
+      [ 'A', radius, radius, 0, 0, 1, -width, halfHeight ],
+      [ 'Z' ]
+      ];
+    },
+    
+    shorten(item) {
+      const keyShape = item.getKeyShape();
+      const lineWidth = keyShape.attr('lineWidth');
+      return (lineWidth > MIN_ARROW_SIZE ? lineWidth : MIN_ARROW_SIZE) * 3.1;
+    },
+    style(item) {
+      const keyShape = item.getKeyShape();
+      const { strokeOpacity, stroke } = keyShape.attr();
+      return {
+        fill: 'black'
+      };
+    }
+   }
+});
+
+  let mode = 'red';
+  let ratio = 0.05;
+  var G = G6.G;
+  var simulation = void 0;
+  var graph = new G6.Graph({
+    container: 'mountNode',
+    //fitView: 'autoZoom',
+    //fitView: 'cc',
+    height: window.innerHeight,
+    width: window.innerWidth,
+    //width: 2000,
+    //renderer: 'svg',
+    //plugins: [nodeSizeMapper, nodeColorMapper],
+    modes: {
+      //default: ['rightPanCanvas']
+      default: ['mouseEnterFillRed', 'mouseLeaveResetFill']
+
+    },
+
+    layout: function layout(nodes, edges) {
+      if (simulation) {
+        simulation.alphaTarget(0.3).restart();
+      } else {
+        simulation = forceSimulation(nodes).force('charge', forceManyBody().strength(-500)).force('link', forceLink(edges).id(function(model) {
+          return model.id;
+        })).force('collision', forceCollide().radius(function(model) {
+          return model.size / 2 * 1.2;
+        })).force('y', forceY()).force('x', forceX()).on('tick', function() {
+          graph.updateNodePosition();
+        });
+      }
+    }
+  });
+  ggraph = graph;
+  graph.node({
+    // style: function style(model) {
+    //   console.log('model', model)
+    //   return {
+    //       fill: '#e18826',
+    //       shadowColor: 'rgba(0,0,0, 0.3)',
+    //       shadowBlur: 3,
+    //       shadowOffsetX: 2,
+    //       shadowOffsetY: 2,
+    //       stroke: null
+    //     };
+    // },    
+    label: function label(model) {
+      
+      return {
+        text: model.name,
+        //fill: '#fff'
+        fill: 'black'
+
+      };
+    }
+  });
+  graph.edge({
+    shape: 'customEdge',
+    endArrow: true,
+    startArrow: true,
+     label: function label(model) {
+       var label = {
+         text: model.name,
+         fontSize: 12,
+         fill: 'black'
+       };
+       return label;    
+   }
+  //labelOffsetY: -20
+});
+  
+  
+  //document.getElementById("67299081").style.display = 'none'
+  graph.read(data); 
+  
+  graph.translate(graph.getWidth() / 2, graph.getHeight() / 2);
+  //graph.on('click', (ev)=>{graph.focus("75919592")});
+  //graph.on('click', (ev)=>{graph.zoom(2)});
+  graph.zoom(0.05);
+
+
+  graph.on('click', function(ev) {
+    // if (lastCheck != -1) {
+    // ggraph.update(ggraph.find(jdata.nodes[lastCheck].id), {
+    //      color: 'yellow'
+    //    });
+    // }
+    
+    ratio = ratio + 1;
+    var item = ev.item;
+    
+    graph.focus(item);
+    graph.zoom(2);
+    //graph.toFront(item);
+    //item.getLabel().show();
+    console.log(item);
+    var outStr = "<ul>"  
+              +"<li>Name:"+ item.model.name + "</li>"
+              +"<li>Para:"+ item.model.para + "</li>"
+              +"<li>Stat:"+ item.model.stat + "</li>"
+              +"<li>Code:"+ item.model.code + "</li>"
+              +"<li>Place:"+ item.model.place + "</li>"
+              +"<li>Phyle:"+ item.model.phyle + "</li>"
+              +"<li>Date:"+ item.model.date + "</li>"
+              +"<li>Datefrom:"+ item.model.datefrom + "</li>"
+              +"<li>Dateto:"+ item.model.dateto + "</li>"
+              +"</ul>";  
+    $("#mountNode2").html(outStr);
+    var j;
+      for(j = 0; j < jdata.edges.length; j++) {
+        var tmpEdge = ggraph.find(jdata.edges[j].id);         
+        //if(tmpEdge.model.source.id != item.id && tmpEdge.model.target.id != item.id) {
+          //console.log(tmpEdge);
+          tmpEdge.hide();
+          ggraph.find(tmpEdge.model.source.id).hide();
+          ggraph.find(tmpEdge.model.target.id).hide();
+        //}
+      }
+      for(j = 0; j < jdata.nodes.length; j++) {
+        var TNode = ggraph.find(jdata.nodes[j].id);         
+        //if(tmpEdge.model.source.id != item.id && tmpEdge.model.target.id != item.id) {
+          //console.log(tmpEdge);
+          TNode.hide();
+          //ggraph.find(tmpEdge.model.source.id).hide();
+          //ggraph.find(tmpEdge.model.target.id).hide();
+        //}
+      }
+      for(j = 0; j < jdata.edges.length; j++) {
+        var tmpEdge = ggraph.find(jdata.edges[j].id);         
+        if(tmpEdge.model.source.id == item.id || tmpEdge.model.target.id == item.id) {
+          //console.log(tmpEdge);
+          tmpEdge.show();
+          var sourceNode = ggraph.find(tmpEdge.model.source.id);
+          var targetNode = ggraph.find(tmpEdge.model.target.id);
+          // ggraph.update(sourceNOde, {
+          //   color: '#66B2FF'
+          // });
+          // ggraph.update(targetNode, {
+          //   color: '#66B2FF'
+          // });
+          sourceNode.show();
+          targetNode.show();
+        }
+      }    
+      ggraph.update(lastNode, {
+         color: 'yellow'
+      }); 
+      ggraph.update(item, {
+         color: 'red'
+      });
+    lastNode = item;
+    graph.draw();
+  });
+
+  graph.on('wheel', function(ev) {
+    ratio = ratio + 0.1;
+    var item = ev.item;
+    graph.focus(item);
+    graph.zoom(ratio);
+    //graph.toFront(item);
+    //item.getLabel().show();
+    graph.draw();
+  });
+
+  // graph.on('keydown', function(ev){
+  //   ratio = 1;
+  //   graph.zoom(ratio);
+  //   graph.draw();
+  // });
+
+  
+  //拖拽节点交互
+  var subject = void 0; // 逼近点
+  graph.on('mousedown', function(ev) {
+    if (ev.domEvent.button === 0) {
+      subject = simulation.find(ev.x, ev.y);
+    }
+  });
+
+  graph.on('dragstart', function(ev) {
+    subject && simulation.alphaTarget(0.3).restart();
+  });
+
+  graph.on('drag', function(ev) {
+    if (subject) {
+      subject.fx = ev.x;
+      subject.fy = ev.y;
+    }
+  });
+
+  graph.on('mouseup', resetState);
+  graph.on('canvas:mouseleave', resetState);
+
+  function resetState() {
+    if (subject) {
+      simulation.alphaTarget(0);
+      subject.fx = null;
+      subject.fy = null;
+      subject = null;
+    }
+  }
+
+  // 鼠标移入节点显示 label
+  function tryHideLabel(node) {
+    var model = node.getModel();
+    var label = node.getLabel();
+    var labelBox = label.getBBox();
+    if (labelBox.maxX - labelBox.minX > model.size) {
+      label.hide();
+      graph.draw();
+    }
+  }
+  var nodes = graph.getNodes();
+  var edges = graph.getEdges();
+
+  edges.forEach(function(edge) {
+    edge.getGraphicGroup().set('capture', false); // 移除边的捕获，提升图形拾取效率
+  });
+
+  nodes.forEach(function(node) {
+    tryHideLabel(node);
+  });
+
+  graph.on('node:mouseenter', function(ev) {
+    var item = ev.item;
+    graph.toFront(item);
+    item.getLabel().show();
+    graph.draw();
+  });
+
+  
+  graph.on('node:mouseleave', function(ev) {
+    var item = ev.item;
+    tryHideLabel(item);
+  });
+  
+});
+
+
+</script>
+
+<!-- <button onclick="nextClick()" class="overlay_button">
+    next
+</button> -->
+
+
+
+<script>
+  var tmpNode;
+function buttonClick() {  
+  if (lastCheck != -1) {
+    ggraph.update(ggraph.find(jdata.nodes[lastCheck].id), {
+         color: 'yellow'
+       });
+  }
+   
+
+  var iname = document.getElementById("inputName").value;
+  //var ilink = document.getElementById("inputLink").value;
+  var i;
+  var flag = false;
+  for(i = lastCheck + 1; i < jdata.nodes.length; i++) {
+    if(jdata.nodes[i].name == iname) {
+    //if(jdata.nodes[i].id == iname) {      
+      var id = jdata.nodes[i].id;
+      //alert(id);
+      //document.getElementById("demo").innerHTML = id;
+      ggraph.focus(id);
+      tmpNode = ggraph.find(id);
+      //console.log(tmpNode); 
+      ggraph.update(ggraph.find(id), {
+        color: 'red',
+        //size: 15
+      });   
+      lastCheck = i;
+      var j;
+      for(j = 0; j < jdata.nodes.length; j++) {
+        if(j != lastCheck) {
+          ggraph.find(jdata.nodes[j].id).hide();
+        }
+      }
+      // for(j = 0; j < jdata.edges.length; j++) {
+      //   ggraph.find(jdata.edges[j].id).hide();
+      // }
+      var lastID = jdata.nodes[lastCheck].id;
+      for(j = 0; j < jdata.edges.length; j++) {
+        var tmpEdge = ggraph.find(jdata.edges[j].id);         
+        if(tmpEdge.model.source.id != lastID && tmpEdge.model.target.id != lastID) {
+          //console.log(tmpEdge);
+          tmpEdge.hide();
+          ggraph.find(tmpEdge.model.source.id).hide();
+          ggraph.find(tmpEdge.model.target.id).hide();
+        }
+      }    
+      for(j = 0; j < jdata.edges.length; j++) {
+        var tmpEdge = ggraph.find(jdata.edges[j].id);         
+        if(tmpEdge.model.source.id == lastID || tmpEdge.model.target.id == lastID) {
+          //console.log(tmpEdge);
+          tmpEdge.show();
+          ggraph.find(tmpEdge.model.source.id).show();
+          ggraph.find(tmpEdge.model.target.id).show();
+        }
+      }     
+
+      ggraph.zoom(2);
+      ggraph.draw();
+      flag = true;
+      break;
+    }
+  }
+  if(flag == false) {
+    alert("Not found!");
+    lastCheck = -1;
+  }
+  else {    
+    var outStr = "<ul>"  
+              +"<li>Name:"+ jdata.nodes[lastCheck].name + "</li>"
+              +"<li>Para:"+ jdata.nodes[lastCheck].para + "</li>"
+              +"<li>Stat:"+ jdata.nodes[lastCheck].stat + "</li>"
+              +"<li>Code:"+ jdata.nodes[lastCheck].code + "</li>"
+              +"<li>Place:"+ jdata.nodes[lastCheck].place + "</li>"
+              +"<li>Phyle:"+ jdata.nodes[lastCheck].phyle + "</li>"
+              +"<li>Date:"+ jdata.nodes[lastCheck].date + "</li>"
+              +"<li>Datefrom:"+ jdata.nodes[lastCheck].datefrom + "</li>"
+              +"<li>Dateto:"+ jdata.nodes[lastCheck].dateto + "</li>"
+              +"</ul>";  
+  $("#mountNode2").html(outStr);
+  
+  //ggraph.find("edge2").getLabel().show();
+  //var tNode = ggraph.find(jdata.nodes[lastCheck].id);
+  // console.log(ggraph.find(jdata.nodes[lastCheck].id));
+  // console.log(ggraph.find("edge2")); 
+  var k, totalEdges;
+  totalEdges = 0;
+  for(k = 0; k < jdata.edges.length; k++) {
+    //var tmpEdge = ggraph.find(jdata.edges[k].id);
+    if(jdata.edges[k].source.id == jdata.nodes[lastCheck].id || jdata.edges[k].target.id == jdata.nodes[lastCheck].id) {
+      totalEdges += 1;
+    }
+  }
+  //console.log(jdata.edges[0]);
+  //$("#mountNode2").html(totalEdges);
+
+  }
+  
+  
+}
+</script>
+</body>
+</html>

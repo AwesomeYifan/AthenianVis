@@ -1,0 +1,157 @@
+  link  description
+
+  -120  possibly same as?
+  -115  identical to?
+  -110  see also?
+  -100  for main information see
+   -99  contemporary of?
+   -98  inferior of?
+   -97  superior of?
+   -96  teacher of?
+   -95  student of?
+   -94  is honored by?
+   -93  honors?
+   -92  opponent of?
+   -91  friend of?
+   -90  associated with?
+   -88  on vase, later than?
+   -87  on vase, earlier than?
+   -86  on vase, related to?
+   -85  on vase with?
+   -83  on grave, later than?
+   -82  on grave, earlier than?
+   -81  family grave with?
+   -80  on gravestone with?
+   -76  on dedication with?
+   -75  on coin with?
+   -73  later colleague of?
+   -72  earlier colleague of?
+   -71  colleague related to?
+   -70  colleague of?
+   -66  manumitted (f) by?
+   -65  manumitted (m) by?
+   -62  slave (f) of?
+   -61  slave (m) of?
+   -58  ward of?
+   -57  guardian of?
+   -56  manumittor (f) of?
+   -55  manumittor (m) of?
+   -52  owner (f) of?
+   -51  owner (m) of?
+   -44  cousin of (f)?
+   -43  cousin of (m)?
+   -42  descendant of?
+   -41  ancestor of?
+   -40  relative of?
+   -38  sister-in-law of?
+   -37  brother-in-law of?
+   -34  mother-in-law of?
+   -33  father-in-law of?
+   -32  daughter-in-law of?
+   -31  son-in-law of?
+   -30  mother/grandmother of?
+   -29  father/grandfather of?
+   -28  niece? of
+   -27  nephew? of
+   -26  aunt? of
+   -25  uncle? of
+   -24  grandmother of?
+   -23  grandfather of?
+   -22  granddaughter of?
+   -21  grandson of?
+   -20  daugher/granddaug of?
+   -19  son/grandson of?
+   -18  adopted sister of?
+   -17  adopted brother of?
+   -14  adoptive mother of?
+   -13  adoptive father of?
+   -12  adopted daughter of?
+   -11  adopted son of?
+   -10  wife/daughter of?
+    -9  husband/father of?
+    -8  sister of?
+    -7  brother of?
+    -6  wife of?
+    -5  husband of?
+    -4  mother of?
+    -3  father of?
+    -2  daughter of?
+    -1  son of?
+     0  perhaps related to
+     1  son of
+     2  daughter of
+     3  father of
+     4  mother of
+     5  husband of
+     6  wife of
+     7  brother of
+     8  sister of
+     9  husband/father of
+    10  wife/daughter of
+    11  adopted son of
+    12  adopted daughter of
+    13  adoptive father of
+    14  adopive mother of
+    17  adopted brother of
+    18  adopted sister of
+    19  son/grandson of
+    20  daughter/granddaug of
+    21  grandson of
+    22  granddaughter of
+    23  grandfather of
+    24  grandmother of
+    25  uncle of
+    26  aunt of
+    27  nephew of
+    28  niece of
+    29  father/grandfather of
+    30  mother/grandmother of
+    31  son-in-law of
+    32  daughter-in-law of
+    33  father-in-law of
+    34  mother-in-law of
+    37  brother-in-law of
+    38  sister-in-law of
+    40  relative of
+    41  ancestor of
+    42  descendant of
+    43  cousin of (m)
+    44  cousin of (f)
+    51  owner (m) of
+    52  owner (f) of
+    55  manumittor (m) of
+    56  manumittor (f) of
+    57  guardian of
+    58  ward of
+    61  slave (m) of
+    62  slave (f) of
+    65  manumitted (m) by
+    66  manumitted (f) by
+    70  colleague of
+    71  colleague relative of
+    72  earlier colleague of
+    73  later colleague of
+    75  on coin with
+    76  on dedication with
+    80  on gravestone with
+    81  family grave with
+    82  on grave, earlier than
+    83  on grave, later than
+    85  on vase with
+    86  on vase, relative of
+    87  on vase, earlier than
+    88  on vase, later than
+    90  associated with
+    91  friend of
+    92  opponent of
+    93  honors
+    94  is honored by
+    95  student of
+    96  teacher of
+    97  superior of
+    98  inferior of
+    99  contemporary of
+   100  for main information see
+   110  see also
+   115  identical to
+   120  possibly same as
